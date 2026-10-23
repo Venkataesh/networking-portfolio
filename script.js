@@ -1,6 +1,8 @@
 
 /* =========================================
    VENKATAESH — PORTFOLIO INTERACTIONS
+   Dark mode by default
+   Light/dark toggle with saved preference
    ========================================= */
 
 const themeToggle = document.getElementById("theme-toggle");
@@ -8,71 +10,83 @@ const themeIcon = document.getElementById("theme-icon");
 const themeLabel = document.querySelector(".theme-label");
 const yearElement = document.getElementById("current-year");
 
-const savedTheme = localStorage.getItem("portfolio-theme");
+// Use the visitor's saved preference when available.
+// Otherwise, default to dark mode.
+let savedTheme = null;
 
-const preferredTheme = window.matchMedia(
-  "(prefers-color-scheme: dark)"
-).matches ? "dark" : "light";
+try {
+  savedTheme = localStorage.getItem("portfolio-theme");
+} catch (error) {
+  // Continue normally if browser storage is unavailable.
+}
+
+const initialTheme =
+  savedTheme === "light" || savedTheme === "dark"
+    ? savedTheme
+    : "dark";
 
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
 
   const isDark = theme === "dark";
 
+  // Update the theme icon.
   if (themeIcon) {
     themeIcon.textContent = isDark ? "☀" : "☾";
   }
 
+  // Show the action the visitor can take next.
   if (themeLabel) {
     themeLabel.textContent = isDark ? "Light mode" : "Dark mode";
   }
 
+  // Update accessibility information.
   if (themeToggle) {
     themeToggle.setAttribute(
       "aria-label",
       isDark ? "Switch to light mode" : "Switch to dark mode"
     );
+
+    themeToggle.setAttribute("aria-pressed", String(isDark));
   }
 
-  const themeColor = document.querySelector(
+  // Match the browser UI color to the selected theme.
+  const themeColorMeta = document.querySelector(
     'meta[name="theme-color"]'
   );
 
-  if (themeColor) {
-    themeColor.setAttribute(
+  if (themeColorMeta) {
+    themeColorMeta.setAttribute(
       "content",
       isDark ? "#0c1220" : "#f7f9fc"
     );
   }
 }
 
-// Use the saved preference, or follow the visitor's device theme.
-applyTheme(
-  savedTheme === "dark" || savedTheme === "light"
-    ? savedTheme
-    : preferredTheme
-);
+// Apply the initial theme.
+applyTheme(initialTheme);
 
-// Toggle between the two themes.
+// Switch between dark and light modes.
 if (themeToggle) {
   themeToggle.addEventListener("click", () => {
     const currentTheme =
-      document.documentElement.dataset.theme || "light";
+      document.documentElement.dataset.theme || "dark";
 
     const nextTheme =
       currentTheme === "dark" ? "light" : "dark";
 
     applyTheme(nextTheme);
 
+    // Remember the visitor's selection.
     try {
       localStorage.setItem("portfolio-theme", nextTheme);
     } catch (error) {
-      // The theme still works if browser storage is unavailable.
+      // Theme switching still works without storage.
     }
   });
 }
 
-// Automatically update the footer year.
+// Keep the footer year up to date.
 if (yearElement) {
   yearElement.textContent = new Date().getFullYear();
 }
